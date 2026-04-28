@@ -7,10 +7,10 @@
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script src="/_sdk/element_sdk.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
 html, body { height: 100%; margin: 0; }
-body { font-family: 'DM Sans', sans-serif; }
+body { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
 code, .mono { font-family: 'JetBrains Mono', monospace; }
 
 .card-flip { perspective: 1000px; }
@@ -30,12 +30,11 @@ code, .mono { font-family: 'JetBrains Mono', monospace; }
 .progress-fill { transition: width 0.4s ease; }
 
 pre code { display: block; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; }
-</style>
-  <style>body { box-sizing: border-box; }</style>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  </style>
  </head>
  <body class="h-full overflow-auto" style="background: #0f1729;">
   <div id="app" class="h-full w-full flex flex-col" style="background: linear-gradient(145deg, #0f1729 0%, #1a1f3a 50%, #0f1729 100%);">
+
    <!-- WELCOME SCREEN -->
    <div id="welcome-screen" class="flex-1 flex flex-col items-center justify-center p-6 slide-in">
     <div class="text-center max-w-2xl mx-auto">
@@ -45,26 +44,42 @@ pre code { display: block; padding: 1rem; border-radius: 0.5rem; overflow-x: aut
      <h1 id="el-title" class="text-5xl md:text-6xl font-bold mb-3" style="color: #e8ecf4; letter-spacing: -0.02em;">SQL Flashcards</h1>
      <p id="el-subtitle" class="text-lg mb-10" style="color: #7b8db5;">Zero to Advanced, one card at a time</p>
      <div class="flex flex-col sm:flex-row gap-3 justify-center mb-12">
-      <button onclick="startFromBeginning()" class="px-8 py-3.5 rounded-xl font-semibold text-base flex items-center justify-center gap-2 hover:brightness-110 transition" style="background: linear-gradient(135deg, #63cdff, #4f7cff); color: #0f1729;"> <i data-lucide="play" style="width:18px;height:18px;"></i> Start from the Beginning </button>
+      <button onclick="startFromBeginning()" class="px-8 py-3.5 rounded-xl font-semibold text-base flex items-center justify-center gap-2 hover:brightness-110 transition" style="background: linear-gradient(135deg, #63cdff, #4f7cff); color: #0f1729;">
+       <i data-lucide="play" style="width:18px;height:18px;"></i> Start from the Beginning
+      </button>
      </div>
      <p class="text-sm mb-4" style="color: #5a6a8a;">Or jump to a topic:</p>
      <div id="topic-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-left max-h-64 overflow-y-auto pr-1"></div>
     </div>
-   </div><!-- CARD SCREEN -->
+   </div>
+
+   <!-- CARD SCREEN -->
    <div id="card-screen" class="flex-1 flex-col p-4 md:p-6 hidden">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
-     <button onclick="goHome()" class="flex items-center gap-1.5 text-sm font-medium hover:opacity-80 transition" style="color: #7b8db5;"> <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Topics </button>
+     <button onclick="goHome()" class="flex items-center gap-1.5 text-sm font-medium hover:opacity-80 transition" style="color: #7b8db5;">
+      <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Topics
+     </button>
      <div class="text-sm font-medium" style="color: #7b8db5;">
       <span id="card-counter"></span>
      </div>
-    </div><!-- Progress -->
+    </div>
+
+    <!-- Progress -->
     <div class="w-full h-1.5 rounded-full mb-5" style="background: rgba(99,205,255,0.1);">
      <div id="progress-bar" class="h-full rounded-full progress-fill" style="background: linear-gradient(90deg, #63cdff, #4f7cff); width: 0%;"></div>
-    </div><!-- Topic label -->
+    </div>
+
+    <!-- Topic label -->
     <div class="flex items-center gap-2 mb-4">
-     <span id="topic-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style="background: rgba(99,205,255,0.12); color: #63cdff;"> <i data-lucide="bookmark" style="width:12px;height:12px;"></i> <span id="topic-label"></span> </span> <span id="difficulty-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold"></span>
-    </div><!-- Flashcard -->
+     <span id="topic-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style="background: rgba(99,205,255,0.12); color: #63cdff;">
+      <i data-lucide="bookmark" style="width:12px;height:12px;"></i>
+      <span id="topic-label"></span>
+     </span>
+     <span id="difficulty-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold"></span>
+    </div>
+
+    <!-- Flashcard -->
     <div class="flex-1 flex items-center justify-center my-2">
      <div class="card-flip w-full max-w-2xl" style="height: 340px;">
       <div id="card-inner" class="card-inner w-full h-full cursor-pointer rounded-2xl" onclick="flipCard()">
@@ -79,15 +94,29 @@ pre code { display: block; padding: 1rem; border-radius: 0.5rem; overflow-x: aut
        </div>
       </div>
      </div>
-    </div><!-- Nav buttons -->
+    </div>
+
+    <!-- Nav buttons -->
     <div class="flex items-center justify-between mt-4 gap-3 max-w-2xl mx-auto w-full">
-     <button onclick="prevCard()" id="btn-prev" class="px-5 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: rgba(99,205,255,0.08); color: #7b8db5;"> <i data-lucide="chevron-left" style="width:16px;height:16px;"></i> Prev </button> <button onclick="markKnown()" class="px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: rgba(79,217,160,0.1); color: #4fd9a0;"> <i data-lucide="check" style="width:16px;height:16px;"></i> Got it </button> <button onclick="nextCard()" id="btn-next" class="px-5 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: linear-gradient(135deg, #63cdff, #4f7cff); color: #0f1729;"> Next <i data-lucide="chevron-right" style="width:16px;height:16px;"></i> </button>
-    </div><!-- Score -->
+     <button onclick="prevCard()" id="btn-prev" class="px-5 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: rgba(99,205,255,0.08); color: #7b8db5;">
+      <i data-lucide="chevron-left" style="width:16px;height:16px;"></i> Prev
+     </button>
+     <button onclick="markKnown()" class="px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: rgba(79,217,160,0.1); color: #4fd9a0;">
+      <i data-lucide="check" style="width:16px;height:16px;"></i> Got it
+     </button>
+     <button onclick="nextCard()" id="btn-next" class="px-5 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: linear-gradient(135deg, #63cdff, #4f7cff); color: #0f1729;">
+      Next <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+     </button>
+    </div>
+
+    <!-- Score -->
     <div class="text-center mt-3 text-xs" style="color: #5a6a8a;">
      <span id="score-display"></span>
     </div>
    </div>
+
   </div>
+
   <script>
 const TOPICS = [
   { name: "SELECT Basics", level: "beginner", cards: [
@@ -197,7 +226,6 @@ const TOPICS = [
   ]}
 ];
 
-// Flatten all cards with topic/level info
 let allCards = [];
 TOPICS.forEach((t, ti) => {
   t.cards.forEach((c, ci) => {
@@ -225,8 +253,7 @@ function applyConfig(config) {
   const t = (k) => config[k] || defaultConfig[k];
   document.getElementById('el-title').textContent = t('main_title');
   document.getElementById('el-subtitle').textContent = t('subtitle');
-  const font = `${t('font_family')}, DM Sans, sans-serif`;
-  document.body.style.fontFamily = font;
+  document.body.style.fontFamily = `${t('font_family')}, DM Sans, sans-serif`;
   const base = t('font_size');
   document.getElementById('el-title').style.fontSize = `${base * 3}px`;
   document.getElementById('el-subtitle').style.fontSize = `${base * 1.1}px`;
@@ -255,7 +282,6 @@ if (window.elementSdk) {
   });
 }
 
-// Build topic grid
 const grid = document.getElementById('topic-grid');
 TOPICS.forEach((t, i) => {
   const colors = { beginner: '#4fd9a0', intermediate: '#63cdff', advanced: '#f59e42' };
@@ -326,5 +352,6 @@ function markKnown() {
 }
 
 lucide.createIcons();
+  </script>
  </body>
 </html>
