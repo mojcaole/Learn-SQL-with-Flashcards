@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Flashcards</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&amp;family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+html, body { height: 100%; margin: 0; }
+body { font-family: 'DM Sans', sans-serif; }
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+.card-flip { perspective: 1000px; }
+.card-inner { position: relative; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
+.card-inner.flipped { transform: rotateY(180deg); }
+.card-front, .card-back { backface-visibility: hidden; position: absolute; inset: 0; }
+.card-back { transform: rotateY(180deg); }
+
+@keyframes slideIn { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.slide-in { animation: slideIn 0.5s ease-out; }
+.fade-in { animation: fadeIn 0.4s ease-out; }
+
+.topic-btn:hover { transform: translateY(-2px); }
+.topic-btn { transition: all 0.2s ease; }
+
+.progress-fill { transition: width 0.4s ease; }
+
+pre code { display: block; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full overflow-auto" style="background: #0f1729;">
+  <div id="app" class="h-full w-full flex flex-col" style="background: linear-gradient(145deg, #0f1729 0%, #1a1f3a 50%, #0f1729 100%);">
+   <!-- WELCOME SCREEN -->
+   <div id="welcome-screen" class="flex-1 flex flex-col items-center justify-center p-6 slide-in">
+    <div class="text-center max-w-2xl mx-auto">
+     <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6" style="background: rgba(99,205,255,0.12); color: #63cdff;">
+      <i data-lucide="database" style="width:14px;height:14px;"></i> 27 TOPICS
+     </div>
+     <h1 id="el-title" class="text-5xl md:text-6xl font-bold mb-3" style="color: #e8ecf4; letter-spacing: -0.02em;">SQL Flashcards</h1>
+     <p id="el-subtitle" class="text-lg mb-10" style="color: #7b8db5;">Zero to Advanced, one card at a time</p>
+     <div class="flex flex-col sm:flex-row gap-3 justify-center mb-12">
+      <button onclick="startFromBeginning()" class="px-8 py-3.5 rounded-xl font-semibold text-base flex items-center justify-center gap-2 hover:brightness-110 transition" style="background: linear-gradient(135deg, #63cdff, #4f7cff); color: #0f1729;"> <i data-lucide="play" style="width:18px;height:18px;"></i> Start from the Beginning </button>
+     </div>
+     <p class="text-sm mb-4" style="color: #5a6a8a;">Or jump to a topic:</p>
+     <div id="topic-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-left max-h-64 overflow-y-auto pr-1"></div>
+    </div>
+   </div><!-- CARD SCREEN -->
+   <div id="card-screen" class="flex-1 flex-col p-4 md:p-6 hidden">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+     <button onclick="goHome()" class="flex items-center gap-1.5 text-sm font-medium hover:opacity-80 transition" style="color: #7b8db5;"> <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> Topics </button>
+     <div class="text-sm font-medium" style="color: #7b8db5;">
+      <span id="card-counter"></span>
+     </div>
+    </div><!-- Progress -->
+    <div class="w-full h-1.5 rounded-full mb-5" style="background: rgba(99,205,255,0.1);">
+     <div id="progress-bar" class="h-full rounded-full progress-fill" style="background: linear-gradient(90deg, #63cdff, #4f7cff); width: 0%;"></div>
+    </div><!-- Topic label -->
+    <div class="flex items-center gap-2 mb-4">
+     <span id="topic-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold" style="background: rgba(99,205,255,0.12); color: #63cdff;"> <i data-lucide="bookmark" style="width:12px;height:12px;"></i> <span id="topic-label"></span> </span> <span id="difficulty-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold"></span>
+    </div><!-- Flashcard -->
+    <div class="flex-1 flex items-center justify-center my-2">
+     <div class="card-flip w-full max-w-2xl" style="height: 340px;">
+      <div id="card-inner" class="card-inner w-full h-full cursor-pointer rounded-2xl" onclick="flipCard()">
+       <div class="card-front rounded-2xl p-6 md:p-8 flex flex-col justify-center overflow-auto" style="background: linear-gradient(145deg, #1e2745, #232b4a); border: 1px solid rgba(99,205,255,0.1);">
+        <p class="text-xs font-semibold uppercase tracking-wider mb-4" style="color: #63cdff;">Question</p>
+        <p id="card-question" class="text-xl md:text-2xl font-semibold leading-relaxed" style="color: #e8ecf4;"></p>
+        <p class="text-xs mt-6" style="color: #5a6a8a;">Click to reveal the answer</p>
+       </div>
+       <div class="card-back rounded-2xl p-6 md:p-8 flex flex-col overflow-auto" style="background: linear-gradient(145deg, #1a2840, #1e3350); border: 1px solid rgba(99,205,255,0.15);">
+        <p class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: #4fd9a0;">Answer</p>
+        <div id="card-answer" class="text-base leading-relaxed flex-1" style="color: #cdd6e8;"></div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Nav buttons -->
+    <div class="flex items-center justify-between mt-4 gap-3 max-w-2xl mx-auto w-full">
+     <button onclick="prevCard()" id="btn-prev" class="px-5 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: rgba(99,205,255,0.08); color: #7b8db5;"> <i data-lucide="chevron-left" style="width:16px;height:16px;"></i> Prev </button> <button onclick="markKnown()" class="px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: rgba(79,217,160,0.1); color: #4fd9a0;"> <i data-lucide="check" style="width:16px;height:16px;"></i> Got it </button> <button onclick="nextCard()" id="btn-next" class="px-5 py-2.5 rounded-xl font-medium text-sm flex items-center gap-1.5 transition hover:brightness-110" style="background: linear-gradient(135deg, #63cdff, #4f7cff); color: #0f1729;"> Next <i data-lucide="chevron-right" style="width:16px;height:16px;"></i> </button>
+    </div><!-- Score -->
+    <div class="text-center mt-3 text-xs" style="color: #5a6a8a;">
+     <span id="score-display"></span>
+    </div>
+   </div>
+  </div>
+  <script>
+const TOPICS = [
+  { name: "SELECT Basics", level: "beginner", cards: [
+    { q: "What does the SELECT statement do in SQL?", a: "SELECT retrieves data from one or more tables. It's the most fundamental SQL command.<pre><code>SELECT column1, column2\nFROM table_name;</code></pre>" },
+    { q: "How do you select ALL columns from a table?", a: "Use the asterisk (*) wildcard:<pre><code>SELECT * FROM employees;</code></pre>This returns every column. In production, specify columns explicitly for performance." },
+    { q: "What does SELECT DISTINCT do?", a: "Removes duplicate rows from results:<pre><code>SELECT DISTINCT department\nFROM employees;</code></pre>Returns each unique department name only once." }
+  ]},
+  { name: "WHERE Clause", level: "beginner", cards: [
+    { q: "What is the WHERE clause used for?", a: "Filters rows based on a condition:<pre><code>SELECT * FROM employees\nWHERE salary > 50000;</code></pre>Only rows meeting the condition are returned." },
+    { q: "How do you combine multiple conditions in WHERE?", a: "Use AND and OR operators:<pre><code>SELECT * FROM employees\nWHERE department = 'Sales'\n  AND salary > 40000;</code></pre>" },
+    { q: "What does the BETWEEN operator do?", a: "Tests if a value falls within a range (inclusive):<pre><code>SELECT * FROM orders\nWHERE order_date BETWEEN\n  '2024-01-01' AND '2024-12-31';</code></pre>" }
+  ]},
+  { name: "ORDER BY", level: "beginner", cards: [
+    { q: "How do you sort results in SQL?", a: "Use ORDER BY to sort ascending (ASC, default) or descending (DESC):<pre><code>SELECT name, salary\nFROM employees\nORDER BY salary DESC;</code></pre>" },
+    { q: "Can you sort by multiple columns?", a: "Yes! Columns are sorted in the order listed:<pre><code>SELECT * FROM employees\nORDER BY department ASC,\n  salary DESC;</code></pre>Sorts by department first, then salary within each department." }
+  ]},
+  { name: "LIMIT & OFFSET", level: "beginner", cards: [
+    { q: "How do you return only the first N rows?", a: "Use LIMIT (MySQL/PostgreSQL) or TOP (SQL Server):<pre><code>SELECT * FROM products\nLIMIT 10;</code></pre>" },
+    { q: "What does OFFSET do?", a: "Skips a number of rows before returning results. Great for pagination:<pre><code>SELECT * FROM products\nLIMIT 10 OFFSET 20;\n-- Returns rows 21-30</code></pre>" }
+  ]},
+  { name: "INSERT", level: "beginner", cards: [
+    { q: "How do you add a new row to a table?", a: "Use INSERT INTO with VALUES:<pre><code>INSERT INTO employees\n  (name, department, salary)\nVALUES\n  ('Alice', 'Engineering', 85000);</code></pre>" },
+    { q: "Can you insert multiple rows at once?", a: "Yes, separate value sets with commas:<pre><code>INSERT INTO products (name, price)\nVALUES\n  ('Widget', 9.99),\n  ('Gadget', 19.99),\n  ('Gizmo', 14.99);</code></pre>" }
+  ]},
+  { name: "UPDATE & DELETE", level: "beginner", cards: [
+    { q: "How do you modify existing rows?", a: "Use UPDATE with SET and WHERE:<pre><code>UPDATE employees\nSET salary = 90000\nWHERE id = 42;</code></pre><strong>⚠️ Always include WHERE</strong> or you'll update every row!" },
+    { q: "How do you remove rows from a table?", a: "Use DELETE with WHERE:<pre><code>DELETE FROM orders\nWHERE status = 'cancelled';</code></pre><strong>⚠️ Without WHERE, all rows are deleted!</strong>" }
+  ]},
+  { name: "Aggregate Functions", level: "intermediate", cards: [
+    { q: "Name the 5 most common aggregate functions.", a: "<strong>COUNT</strong> – number of rows<br><strong>SUM</strong> – total of values<br><strong>AVG</strong> – average value<br><strong>MIN</strong> – smallest value<br><strong>MAX</strong> – largest value<pre><code>SELECT COUNT(*), AVG(salary)\nFROM employees;</code></pre>" },
+    { q: "What's the difference between COUNT(*) and COUNT(column)?", a: "<strong>COUNT(*)</strong> counts all rows, including NULLs.<br><strong>COUNT(column)</strong> counts only non-NULL values in that column.<pre><code>SELECT COUNT(*),\n  COUNT(email) -- skips NULLs\nFROM users;</code></pre>" }
+  ]},
+  { name: "GROUP BY", level: "intermediate", cards: [
+    { q: "What does GROUP BY do?", a: "Groups rows sharing a value, letting you run aggregates per group:<pre><code>SELECT department, AVG(salary)\nFROM employees\nGROUP BY department;</code></pre>Returns one row per department." },
+    { q: "What's the difference between WHERE and HAVING?", a: "<strong>WHERE</strong> filters rows <em>before</em> grouping.<br><strong>HAVING</strong> filters groups <em>after</em> aggregation.<pre><code>SELECT department, AVG(salary) avg_sal\nFROM employees\nWHERE active = true\nGROUP BY department\nHAVING AVG(salary) > 60000;</code></pre>" }
+  ]},
+  { name: "INNER JOIN", level: "intermediate", cards: [
+    { q: "What does INNER JOIN return?", a: "Only rows that have matching values in <strong>both</strong> tables:<pre><code>SELECT e.name, d.dept_name\nFROM employees e\nINNER JOIN departments d\n  ON e.dept_id = d.id;</code></pre>Unmatched rows from either side are excluded." },
+    { q: "What happens if no rows match in an INNER JOIN?", a: "Those rows are simply excluded from the result set. If <em>no</em> rows match at all, you get an empty result." }
+  ]},
+  { name: "LEFT & RIGHT JOIN", level: "intermediate", cards: [
+    { q: "What does LEFT JOIN return?", a: "All rows from the <strong>left</strong> table, plus matched rows from the right. Unmatched right columns become NULL:<pre><code>SELECT c.name, o.order_id\nFROM customers c\nLEFT JOIN orders o\n  ON c.id = o.customer_id;</code></pre>" },
+    { q: "When would you use LEFT JOIN over INNER JOIN?", a: "When you need to keep <strong>all</strong> records from the primary table, even if there's no match. E.g., all customers including those with zero orders." }
+  ]},
+  { name: "FULL & CROSS JOIN", level: "intermediate", cards: [
+    { q: "What does FULL OUTER JOIN return?", a: "All rows from <strong>both</strong> tables. NULLs fill in where there's no match on either side:<pre><code>SELECT a.name, b.name\nFROM table_a a\nFULL OUTER JOIN table_b b\n  ON a.id = b.a_id;</code></pre>" },
+    { q: "What is a CROSS JOIN?", a: "Produces the <strong>Cartesian product</strong> — every row from A paired with every row from B:<pre><code>SELECT colors.name, sizes.name\nFROM colors CROSS JOIN sizes;</code></pre>3 colors × 4 sizes = 12 rows." }
+  ]},
+  { name: "Self Joins", level: "intermediate", cards: [
+    { q: "What is a self join and when do you use it?", a: "A table joined to <strong>itself</strong>. Useful for hierarchical or comparative data:<pre><code>SELECT e.name AS employee,\n  m.name AS manager\nFROM employees e\nLEFT JOIN employees m\n  ON e.manager_id = m.id;</code></pre>" }
+  ]},
+  { name: "Subqueries", level: "intermediate", cards: [
+    { q: "What is a subquery?", a: "A query nested inside another query. Can appear in SELECT, FROM, or WHERE:<pre><code>SELECT name FROM employees\nWHERE salary > (\n  SELECT AVG(salary)\n  FROM employees\n);</code></pre>Returns employees earning above average." },
+    { q: "What's the difference between correlated and non-correlated subqueries?", a: "<strong>Non-correlated:</strong> runs once independently.<br><strong>Correlated:</strong> references the outer query and runs once per outer row — slower but more powerful.<pre><code>SELECT * FROM employees e\nWHERE salary > (\n  SELECT AVG(salary)\n  FROM employees\n  WHERE dept_id = e.dept_id\n);</code></pre>" }
+  ]},
+  { name: "EXISTS & IN", level: "intermediate", cards: [
+    { q: "What does the EXISTS operator do?", a: "Returns TRUE if the subquery returns <strong>any</strong> rows:<pre><code>SELECT c.name FROM customers c\nWHERE EXISTS (\n  SELECT 1 FROM orders o\n  WHERE o.customer_id = c.id\n);</code></pre>" },
+    { q: "When should you use IN vs EXISTS?", a: "<strong>IN</strong> is cleaner for small lists or non-correlated subqueries.<br><strong>EXISTS</strong> often performs better for large, correlated subqueries because it can short-circuit once a match is found." }
+  ]},
+  { name: "UNION & INTERSECT", level: "intermediate", cards: [
+    { q: "What does UNION do?", a: "Combines result sets of two queries, <strong>removing duplicates</strong>:<pre><code>SELECT name FROM customers\nUNION\nSELECT name FROM suppliers;</code></pre>Use UNION ALL to keep duplicates (faster)." },
+    { q: "What's the difference between UNION, INTERSECT, and EXCEPT?", a: "<strong>UNION</strong> – all rows from both<br><strong>INTERSECT</strong> – only rows in both<br><strong>EXCEPT</strong> – rows in first but not second" }
+  ]},
+  { name: "CASE Expressions", level: "intermediate", cards: [
+    { q: "How do you add conditional logic in SQL?", a: "Use CASE for if/else logic:<pre><code>SELECT name,\n  CASE\n    WHEN salary > 80000 THEN 'High'\n    WHEN salary > 50000 THEN 'Mid'\n    ELSE 'Entry'\n  END AS tier\nFROM employees;</code></pre>" }
+  ]},
+  { name: "String Functions", level: "intermediate", cards: [
+    { q: "Name some common SQL string functions.", a: "<strong>UPPER/LOWER</strong> – change case<br><strong>CONCAT</strong> – join strings<br><strong>SUBSTRING</strong> – extract part<br><strong>TRIM</strong> – remove whitespace<br><strong>LENGTH</strong> – character count<pre><code>SELECT UPPER(name),\n  CONCAT(first, ' ', last)\nFROM users;</code></pre>" }
+  ]},
+  { name: "Date Functions", level: "intermediate", cards: [
+    { q: "How do you work with dates in SQL?", a: "Common date functions (syntax varies by DB):<pre><code>SELECT\n  CURRENT_DATE,\n  EXTRACT(YEAR FROM hire_date),\n  DATE_DIFF(NOW(), hire_date)\nFROM employees;</code></pre>Also: DATE_ADD, DATE_TRUNC, DATEPART." }
+  ]},
+  { name: "NULL Handling", level: "intermediate", cards: [
+    { q: "Why can't you use = to check for NULL?", a: "NULL represents <em>unknown</em>, not a value. Comparisons with = return NULL (not TRUE):<pre><code>-- Wrong\nWHERE email = NULL\n\n-- Correct\nWHERE email IS NULL\nWHERE email IS NOT NULL</code></pre>" },
+    { q: "What does COALESCE do?", a: "Returns the first non-NULL argument:<pre><code>SELECT COALESCE(nickname, first_name,\n  'Unknown') AS display_name\nFROM users;</code></pre>Great for providing fallback values." }
+  ]},
+  { name: "Views", level: "advanced", cards: [
+    { q: "What is a VIEW in SQL?", a: "A stored query that acts like a virtual table:<pre><code>CREATE VIEW active_employees AS\nSELECT * FROM employees\nWHERE active = true;</code></pre>Query it like a table: <code>SELECT * FROM active_employees;</code>" },
+    { q: "What are the benefits of using views?", a: "<strong>1.</strong> Simplify complex queries<br><strong>2.</strong> Provide a security layer (restrict column access)<br><strong>3.</strong> Present consistent interface even if underlying schema changes<br><strong>4.</strong> Encapsulate business logic" }
+  ]},
+  { name: "Indexes", level: "advanced", cards: [
+    { q: "What is an index and why use one?", a: "A data structure that speeds up row lookups (like a book's index):<pre><code>CREATE INDEX idx_email\nON users (email);</code></pre>Dramatically speeds up WHERE and JOIN on indexed columns." },
+    { q: "What are the trade-offs of indexes?", a: "<strong>Pros:</strong> Faster SELECT queries, faster JOINs<br><strong>Cons:</strong> Slower INSERT/UPDATE/DELETE (index must be updated), uses additional disk space. Don't over-index!" }
+  ]},
+  { name: "Window Functions", level: "advanced", cards: [
+    { q: "What is a window function?", a: "Performs a calculation across a set of rows <strong>without collapsing them</strong> (unlike GROUP BY):<pre><code>SELECT name, department, salary,\n  RANK() OVER (\n    PARTITION BY department\n    ORDER BY salary DESC\n  ) AS dept_rank\nFROM employees;</code></pre>" },
+    { q: "Name common window functions.", a: "<strong>Ranking:</strong> ROW_NUMBER, RANK, DENSE_RANK, NTILE<br><strong>Value:</strong> LAG, LEAD, FIRST_VALUE, LAST_VALUE<br><strong>Aggregate:</strong> SUM, AVG, COUNT (with OVER clause)<pre><code>SELECT name,\n  LAG(salary) OVER (ORDER BY id)\n    AS prev_salary\nFROM employees;</code></pre>" }
+  ]},
+  { name: "CTEs", level: "advanced", cards: [
+    { q: "What is a CTE (Common Table Expression)?", a: "A named temporary result set using WITH:<pre><code>WITH top_earners AS (\n  SELECT * FROM employees\n  WHERE salary > 100000\n)\nSELECT department, COUNT(*)\nFROM top_earners\nGROUP BY department;</code></pre>Improves readability over nested subqueries." },
+    { q: "What is a recursive CTE?", a: "A CTE that references itself, used for hierarchical data:<pre><code>WITH RECURSIVE org AS (\n  SELECT id, name, manager_id\n  FROM employees WHERE manager_id IS NULL\n  UNION ALL\n  SELECT e.id, e.name, e.manager_id\n  FROM employees e\n  JOIN org ON e.manager_id = org.id\n)\nSELECT * FROM org;</code></pre>" }
+  ]},
+  { name: "Transactions", level: "advanced", cards: [
+    { q: "What is a transaction?", a: "A group of SQL operations that execute as one atomic unit — <strong>all succeed or all fail</strong>:<pre><code>BEGIN TRANSACTION;\nUPDATE accounts SET bal = bal - 100\n  WHERE id = 1;\nUPDATE accounts SET bal = bal + 100\n  WHERE id = 2;\nCOMMIT;</code></pre>" },
+    { q: "What does ACID stand for?", a: "<strong>A</strong>tomicity – all or nothing<br><strong>C</strong>onsistency – data stays valid<br><strong>I</strong>solation – concurrent txns don't interfere<br><strong>D</strong>urability – committed data survives crashes" }
+  ]},
+  { name: "Normalization", level: "advanced", cards: [
+    { q: "What is database normalization?", a: "Organizing tables to <strong>reduce redundancy</strong> and improve data integrity. Each normal form (1NF → 5NF) adds stricter rules." },
+    { q: "Explain 1NF, 2NF, and 3NF.", a: "<strong>1NF:</strong> Each column holds atomic (single) values, no repeating groups<br><strong>2NF:</strong> 1NF + no partial dependency on composite keys<br><strong>3NF:</strong> 2NF + no transitive dependencies (non-key → non-key)" }
+  ]},
+  { name: "Stored Procedures", level: "advanced", cards: [
+    { q: "What is a stored procedure?", a: "Precompiled SQL code stored in the database that can accept parameters:<pre><code>CREATE PROCEDURE get_emp(\n  IN dept VARCHAR(50)\n)\nBEGIN\n  SELECT * FROM employees\n  WHERE department = dept;\nEND;</code></pre>Call with: <code>CALL get_emp('Sales');</code>" }
+  ]},
+  { name: "Query Optimisation", level: "advanced", cards: [
+    { q: "How do you analyse query performance?", a: "Use <strong>EXPLAIN</strong> (or EXPLAIN ANALYZE) to see the execution plan:<pre><code>EXPLAIN ANALYZE\nSELECT * FROM orders\nWHERE customer_id = 42;</code></pre>Look for: full table scans, missing indexes, high row estimates." },
+    { q: "Name 5 query optimisation techniques.", a: "<strong>1.</strong> Add indexes on WHERE/JOIN columns<br><strong>2.</strong> Select only needed columns (avoid SELECT *)<br><strong>3.</strong> Use EXISTS instead of IN for large subqueries<br><strong>4.</strong> Avoid functions on indexed columns in WHERE<br><strong>5.</strong> Denormalize for read-heavy workloads" }
+  ]}
+];
+
+// Flatten all cards with topic/level info
+let allCards = [];
+TOPICS.forEach((t, ti) => {
+  t.cards.forEach((c, ci) => {
+    allCards.push({ ...c, topic: t.name, level: t.level, topicIdx: ti, cardIdx: ci });
+  });
+});
+
+let currentIndex = 0;
+let flipped = false;
+let knownSet = new Set();
+
+const defaultConfig = {
+  main_title: "SQL Flashcards",
+  subtitle: "Zero to Advanced, one card at a time",
+  background_color: "#0f1729",
+  surface_color: "#1e2745",
+  text_color: "#e8ecf4",
+  accent_color: "#63cdff",
+  success_color: "#4fd9a0",
+  font_family: "DM Sans",
+  font_size: 16
+};
+
+function applyConfig(config) {
+  const t = (k) => config[k] || defaultConfig[k];
+  document.getElementById('el-title').textContent = t('main_title');
+  document.getElementById('el-subtitle').textContent = t('subtitle');
+  const font = `${t('font_family')}, DM Sans, sans-serif`;
+  document.body.style.fontFamily = font;
+  const base = t('font_size');
+  document.getElementById('el-title').style.fontSize = `${base * 3}px`;
+  document.getElementById('el-subtitle').style.fontSize = `${base * 1.1}px`;
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => applyConfig(config),
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: v => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); }},
+        { get: () => config.surface_color || defaultConfig.surface_color, set: v => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); }},
+        { get: () => config.text_color || defaultConfig.text_color, set: v => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); }},
+        { get: () => config.accent_color || defaultConfig.accent_color, set: v => { config.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); }},
+        { get: () => config.success_color || defaultConfig.success_color, set: v => { config.success_color = v; window.elementSdk.setConfig({ success_color: v }); }}
+      ],
+      borderables: [],
+      fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: v => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }},
+      fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: v => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }}
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ["main_title", config.main_title || defaultConfig.main_title],
+      ["subtitle", config.subtitle || defaultConfig.subtitle]
+    ])
+  });
+}
+
+// Build topic grid
+const grid = document.getElementById('topic-grid');
+TOPICS.forEach((t, i) => {
+  const colors = { beginner: '#4fd9a0', intermediate: '#63cdff', advanced: '#f59e42' };
+  const btn = document.createElement('button');
+  btn.className = 'topic-btn text-left px-3 py-2 rounded-lg text-xs font-medium';
+  btn.style.cssText = `background: rgba(99,205,255,0.06); color: #cdd6e8; border: 1px solid rgba(99,205,255,0.08);`;
+  btn.innerHTML = `<span style="color:${colors[t.level]}; font-size:10px;">●</span> ${t.name}`;
+  btn.onclick = () => jumpToTopic(i);
+  grid.appendChild(btn);
+});
+
+function startFromBeginning() { currentIndex = 0; showCardScreen(); }
+
+function jumpToTopic(topicIdx) {
+  currentIndex = allCards.findIndex(c => c.topicIdx === topicIdx);
+  showCardScreen();
+}
+
+function showCardScreen() {
+  document.getElementById('welcome-screen').classList.add('hidden');
+  const cs = document.getElementById('card-screen');
+  cs.classList.remove('hidden');
+  cs.classList.add('flex');
+  renderCard();
+}
+
+function goHome() {
+  document.getElementById('card-screen').classList.add('hidden');
+  document.getElementById('card-screen').classList.remove('flex');
+  document.getElementById('welcome-screen').classList.remove('hidden');
+}
+
+function renderCard() {
+  const card = allCards[currentIndex];
+  flipped = false;
+  document.getElementById('card-inner').classList.remove('flipped');
+  document.getElementById('card-question').textContent = card.q;
+  document.getElementById('card-answer').innerHTML = card.a;
+  document.getElementById('topic-label').textContent = card.topic;
+  document.getElementById('card-counter').textContent = `${currentIndex + 1} / ${allCards.length}`;
+  document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / allCards.length) * 100}%`;
+
+  const db = document.getElementById('difficulty-badge');
+  const colors = { beginner: ['rgba(79,217,160,0.12)','#4fd9a0'], intermediate: ['rgba(99,205,255,0.12)','#63cdff'], advanced: ['rgba(245,158,66,0.12)','#f59e42'] };
+  const [bg, fg] = colors[card.level];
+  db.style.background = bg; db.style.color = fg;
+  db.textContent = card.level.charAt(0).toUpperCase() + card.level.slice(1);
+
+  document.getElementById('score-display').textContent = `✓ ${knownSet.size} of ${allCards.length} mastered`;
+  lucide.createIcons();
+}
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('card-inner').classList.toggle('flipped', flipped);
+}
+
+function nextCard() {
+  if (currentIndex < allCards.length - 1) { currentIndex++; renderCard(); }
+}
+function prevCard() {
+  if (currentIndex > 0) { currentIndex--; renderCard(); }
+}
+function markKnown() {
+  knownSet.add(currentIndex);
+  document.getElementById('score-display').textContent = `✓ ${knownSet.size} of ${allCards.length} mastered`;
+  if (currentIndex < allCards.length - 1) { currentIndex++; renderCard(); }
+}
+
+lucide.createIcons();
+ </body>
+</html>
